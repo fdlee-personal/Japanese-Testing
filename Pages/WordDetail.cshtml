@@ -1,0 +1,51 @@
+@page
+@model JPracticeWeb.Pages.WordDetailModel
+@{
+    ViewData["Title"] = "단어 상세";
+}
+
+<section class="page-shell">
+    <div class="card-panel">
+        @if (Model.Word is null)
+        {
+            <p>단어를 찾을 수 없습니다.</p>
+        }
+        else
+        {
+            <p class="eyebrow">단어 상세</p>
+            <h1 class="page-title">@Model.Word.KoreanWord</h1>
+
+            <div class="detail-list">
+                @foreach (var term in Model.Word.GetJapaneseTerms())
+                {
+                    <div class="detail-row">
+                        <div class="detail-name">@term.Label</div>
+                        <div class="detail-value">
+                            @term.Term
+                            @if (!string.IsNullOrWhiteSpace(term.Kana))
+                            {
+                                <span class="detail-kana">(@term.Kana)</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="button-row top-gap worddetail-actions">
+                <a class="action-button secondary-button icon-button" asp-page="/WordList" asp-route-p="@Model.ReturnPage" title="목록" aria-label="목록">
+                    <span aria-hidden="true">&#128203;</span>
+                </a>
+                <a class="action-button secondary-button icon-button" asp-page="/EditWord" asp-route-id="@Model.Word.Id" asp-route-p="@Model.ReturnPage" title="수정" aria-label="수정">
+                    <span aria-hidden="true">&#128221;</span>
+                </a>
+                <form method="post" asp-page-handler="Delete" class="inline-form">
+                    <input type="hidden" name="id" value="@Model.Word.Id" />
+                    <input type="hidden" name="p" value="@Model.ReturnPage" />
+                    <button type="submit" class="action-button secondary-button icon-button" title="삭제" aria-label="삭제" onclick="return confirm('이 단어를 삭제할까요?');">
+                        <span aria-hidden="true">&#128465;&#65039;</span>
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+</section>

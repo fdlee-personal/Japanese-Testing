@@ -1,0 +1,153 @@
+@page
+@model JPracticeWeb.Pages.TestModel
+@{
+    ViewData["Title"] = "테스트";
+}
+
+<section class="page-shell">
+    <div class="card-panel">
+        @if (Model.HasQuestion)
+        {
+            <div class="question-card">
+                <div class="question-row">
+                    <strong class="question-value">@Model.State.KoreanWord</strong>
+                </div>
+                <div class="question-row">
+                    <span class="question-label question-label-strong">일본어 (@Model.State.FormName)</span>
+                </div>
+            </div>
+
+            @if (Model.IsChoiceMode)
+            {
+                <form method="post" asp-page-handler="Choice" class="word-form">
+                    <input asp-for="State.KoreanWord" type="hidden" />
+                    <input asp-for="State.FormName" type="hidden" />
+                    <input asp-for="State.CorrectTerm" type="hidden" />
+                    <input asp-for="State.CorrectKana" type="hidden" />
+                    <input asp-for="State.CorrectChoiceValue" type="hidden" />
+                    <input asp-for="State.Mode" type="hidden" />
+                    <input asp-for="State.Choice1" type="hidden" />
+                    <input asp-for="State.Choice1Counterpart" type="hidden" />
+                    <input asp-for="State.Choice2" type="hidden" />
+                    <input asp-for="State.Choice2Counterpart" type="hidden" />
+                    <input asp-for="State.Choice3" type="hidden" />
+                    <input asp-for="State.Choice3Counterpart" type="hidden" />
+
+                    <div class="choice-grid">
+                        @foreach (var option in Model.ChoiceOptions)
+                        {
+                            var expectedCorrectChoice = string.IsNullOrWhiteSpace(Model.State.CorrectChoiceValue)
+                                ? Model.State.CorrectTerm
+                                : Model.State.CorrectChoiceValue;
+                            var isCorrectOption = string.Equals(option, expectedCorrectChoice, StringComparison.Ordinal);
+                            var isChosenOption = string.Equals(option, Model.SelectedChoice, StringComparison.Ordinal);
+                            var cssClass = "choice-button secondary-button";
+
+                            if (Model.IsAnswered && isCorrectOption)
+                            {
+                                cssClass += " choice-correct";
+                            }
+                            else if (Model.IsAnswered && isChosenOption && !isCorrectOption)
+                            {
+                                cssClass += " choice-wrong";
+                            }
+
+                            <button type="submit"
+                                    name="SelectedChoice"
+                                    value="@option"
+                                    class="action-button @cssClass"
+                                    @(Model.IsAnswered ? "disabled" : null)>
+                                @Model.GetChoiceDisplayLabel(option)
+                            </button>
+                        }
+                    </div>
+                </form>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Input" class="word-form">
+                    <input asp-for="State.KoreanWord" type="hidden" />
+                    <input asp-for="State.FormName" type="hidden" />
+                    <input asp-for="State.CorrectTerm" type="hidden" />
+                    <input asp-for="State.CorrectKana" type="hidden" />
+                    <input asp-for="State.Mode" type="hidden" />
+
+                    <div class="answer-input-row">
+                        @if (Model.IsAnswered && !Model.IsCorrect)
+                        {
+                            <textarea asp-for="UserInputAnswer"
+                                      id="user-input-answer"
+                                      rows="3"
+                                      class="form-control answer-textarea input-wrong"
+                                      autocomplete="off"></textarea>
+                        }
+                        else
+                        {
+                            <input asp-for="UserInputAnswer"
+                                   id="user-input-answer"
+                                   class="form-control @(Model.IsAnswered ? (Model.IsCorrect ? "input-correct" : "input-wrong") : string.Empty)"
+                                   autocomplete="off" />
+                        }
+                        @if (!Model.IsAnswered)
+                        {
+                            <button type="submit" class="action-button secondary-button icon-submit-button" title="제출" aria-label="제출">
+                                <span aria-hidden="true">&#9989;</span>
+                            </button>
+                        }
+                    </div>
+                    <span asp-validation-for="UserInputAnswer" class="text-danger"></span>
+                </form>
+            }
+        }
+        else
+        {
+            <p>저장된 단어가 없습니다. 먼저 단어를 추가하세요.</p>
+        }
+
+        <div class="test-nav-row top-gap">
+            <a class="action-button secondary-button icon-button icon-next-button" asp-page="/Index" title="홈" aria-label="홈">
+                <span aria-hidden="true">&#127968;</span>
+            </a>
+            @if (Model.HasQuestion && Model.IsAnswered)
+            {
+                <a class="action-button secondary-button icon-button icon-next-button" asp-page="/Test" title="다음 문제" aria-label="다음 문제">
+                    <span aria-hidden="true">&#10145;&#65039;</span>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            const input = document.querySelector('form[asp-page-handler="Input"] #user-input-answer, form[action*="handler=Input"] #user-input-answer, #user-input-answer');
+            if (input && input.tagName === 'INPUT') {
+                input.addEventListener('keydown', function (event) {
+                    if (event.key !== 'Enter') return;
+                    event.preventDefault();
+                    const form = input.form;
+                    if (!form) return;
+
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                        return;
+                    }
+
+                    form.submit();
+                });
+            }
+
+            const textarea = document.querySelector('.answer-textarea');
+            if (textarea) {
+                const resize = () => {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = textarea.scrollHeight + 'px';
+                };
+
+                resize();
+                textarea.addEventListener('input', resize);
+            }
+        })();
+    </script>
+}

@@ -1,0 +1,161 @@
+﻿@page
+@model JPracticeWeb.Pages.AddWordModel
+@{
+    ViewData["Title"] = "단어 추가";
+}
+
+<section class="page-shell">
+    <div class="card-panel form-panel">
+        <h1 class="page-title">테스트 단어 추가</h1>
+        <p class="page-subtitle">연습용 단어의 한국어/일본어 활용형과 가나를 입력하세요.</p>
+
+        @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+        {
+            <p class="status-message">@Model.StatusMessage</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.AutoFillMessage))
+        {
+            <p class="status-message @(Model.AutoFillSucceeded ? string.Empty : "status-error")">@Model.AutoFillMessage</p>
+        }
+
+        <form method="post" asp-page="/AddWord" class="word-form" id="add-word-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label asp-for="Input.KoreanWord"></label>
+                    <input asp-for="Input.KoreanWord" class="form-control" />
+                    <span asp-validation-for="Input.KoreanWord" class="text-danger"></span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="Input.DictionaryTerm"></label>
+                    <input asp-for="Input.DictionaryTerm" class="form-control" />
+                    <span asp-validation-for="Input.DictionaryTerm" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="button-row compact-row">
+                <button type="button" id="search-autofill-button" class="action-button secondary-button">자동채우기 검색</button>
+            </div>
+            <p class="helper-text">단어/사전형 중 하나를 입력하세요. 둘 다 입력하면 사전형(일본어) 기준으로 자동채웁니다.</p>
+            <label asp-for="Input.DictionaryTermKana"></label>
+            <input asp-for="Input.DictionaryTermKana" class="form-control" />
+            <span asp-validation-for="Input.DictionaryTermKana" class="text-danger"></span>
+
+            <label asp-for="Input.PoliteForm"></label>
+            <input asp-for="Input.PoliteForm" class="form-control" />
+            <span asp-validation-for="Input.PoliteForm" class="text-danger"></span>
+            <label asp-for="Input.PoliteFormKana"></label>
+            <input asp-for="Input.PoliteFormKana" class="form-control" />
+            <span asp-validation-for="Input.PoliteFormKana" class="text-danger"></span>
+
+            <label asp-for="Input.NegativeForm"></label>
+            <input asp-for="Input.NegativeForm" class="form-control" />
+            <span asp-validation-for="Input.NegativeForm" class="text-danger"></span>
+            <label asp-for="Input.NegativeFormKana"></label>
+            <input asp-for="Input.NegativeFormKana" class="form-control" />
+            <span asp-validation-for="Input.NegativeFormKana" class="text-danger"></span>
+
+            <label asp-for="Input.NegativePoliteForm"></label>
+            <input asp-for="Input.NegativePoliteForm" class="form-control" />
+            <span asp-validation-for="Input.NegativePoliteForm" class="text-danger"></span>
+            <label asp-for="Input.NegativePoliteFormKana"></label>
+            <input asp-for="Input.NegativePoliteFormKana" class="form-control" />
+            <span asp-validation-for="Input.NegativePoliteFormKana" class="text-danger"></span>
+
+            <label asp-for="Input.PastForm"></label>
+            <input asp-for="Input.PastForm" class="form-control" />
+            <span asp-validation-for="Input.PastForm" class="text-danger"></span>
+            <label asp-for="Input.PastFormKana"></label>
+            <input asp-for="Input.PastFormKana" class="form-control" />
+            <span asp-validation-for="Input.PastFormKana" class="text-danger"></span>
+
+            <label asp-for="Input.PastPoliteForm"></label>
+            <input asp-for="Input.PastPoliteForm" class="form-control" />
+            <span asp-validation-for="Input.PastPoliteForm" class="text-danger"></span>
+            <label asp-for="Input.PastPoliteFormKana"></label>
+            <input asp-for="Input.PastPoliteFormKana" class="form-control" />
+            <span asp-validation-for="Input.PastPoliteFormKana" class="text-danger"></span>
+
+            <label asp-for="Input.PastNegativeForm"></label>
+            <input asp-for="Input.PastNegativeForm" class="form-control" />
+            <span asp-validation-for="Input.PastNegativeForm" class="text-danger"></span>
+            <label asp-for="Input.PastNegativeFormKana"></label>
+            <input asp-for="Input.PastNegativeFormKana" class="form-control" />
+            <span asp-validation-for="Input.PastNegativeFormKana" class="text-danger"></span>
+
+            <label asp-for="Input.PastNegativePoliteForm"></label>
+            <input asp-for="Input.PastNegativePoliteForm" class="form-control" />
+            <span asp-validation-for="Input.PastNegativePoliteForm" class="text-danger"></span>
+            <label asp-for="Input.PastNegativePoliteFormKana"></label>
+            <input asp-for="Input.PastNegativePoliteFormKana" class="form-control" />
+            <span asp-validation-for="Input.PastNegativePoliteFormKana" class="text-danger"></span>
+
+            <label asp-for="Input.ConnectiveForm"></label>
+            <input asp-for="Input.ConnectiveForm" class="form-control" />
+            <span asp-validation-for="Input.ConnectiveForm" class="text-danger"></span>
+            <label asp-for="Input.ConnectiveFormKana"></label>
+            <input asp-for="Input.ConnectiveFormKana" class="form-control" />
+            <span asp-validation-for="Input.ConnectiveFormKana" class="text-danger"></span>
+
+            <div class="button-row addword-actions">
+                <a class="action-button secondary-button icon-button" asp-page="/Index" title="홈" aria-label="홈">
+                    <span aria-hidden="true">&#127968;</span>
+                </a>
+                <a class="action-button secondary-button icon-button" asp-page="/WordList" title="목록" aria-label="목록">
+                    <span aria-hidden="true">&#128203;</span>
+                </a>
+                <button type="button" id="save-word-button" class="action-button secondary-button icon-button" title="저장" aria-label="저장">
+                    <span aria-hidden="true">&#128190;</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const form = document.getElementById('add-word-form');
+            const searchAutoFillButton = document.getElementById('search-autofill-button');
+            const saveWordButton = document.getElementById('save-word-button');
+            if (!form || !searchAutoFillButton || !saveWordButton) return;
+            const saveAction = '@Url.Page("/AddWord")';
+            const searchAutoFillAction = '@Url.Page("/AddWord", new { handler = "Search" })';
+
+            function copyIfEmpty(sourceName, targetName) {
+                const source = form.querySelector(`[name="${sourceName}"]`);
+                const target = form.querySelector(`[name="${targetName}"]`);
+                if (!source || !target) return;
+                if (!target.value.trim()) {
+                    target.value = source.value.trim();
+                }
+            }
+
+            function fillKanaFallbacks() {
+                copyIfEmpty('Input.DictionaryTerm', 'Input.DictionaryTermKana');
+                copyIfEmpty('Input.PoliteForm', 'Input.PoliteFormKana');
+                copyIfEmpty('Input.NegativeForm', 'Input.NegativeFormKana');
+                copyIfEmpty('Input.NegativePoliteForm', 'Input.NegativePoliteFormKana');
+                copyIfEmpty('Input.PastForm', 'Input.PastFormKana');
+                copyIfEmpty('Input.PastPoliteForm', 'Input.PastPoliteFormKana');
+                copyIfEmpty('Input.PastNegativeForm', 'Input.PastNegativeFormKana');
+                copyIfEmpty('Input.PastNegativePoliteForm', 'Input.PastNegativePoliteFormKana');
+                copyIfEmpty('Input.ConnectiveForm', 'Input.ConnectiveFormKana');
+            }
+
+            searchAutoFillButton.addEventListener('click', function () {
+                form.setAttribute('action', searchAutoFillAction);
+                form.submit();
+            });
+
+            saveWordButton.addEventListener('click', function () {
+                fillKanaFallbacks();
+                form.setAttribute('action', saveAction);
+                form.submit();
+            });
+        })();
+    </script>
+}
