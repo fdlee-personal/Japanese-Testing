@@ -51,6 +51,7 @@ public class AddWordModel : PageModel
         TestWordStore.Add(new TestClass
         {
             KoreanWord = normalizedKorean,
+            PartOfSpeech = Input.PartOfSpeech,
             DictionaryTerm = normalizedDictionary,
             DictionaryTermKana = Input.DictionaryTermKana.Trim(),
             PoliteForm = Input.PoliteForm.Trim(),
@@ -77,13 +78,15 @@ public class AddWordModel : PageModel
 
     public async Task<IActionResult> OnPostAutoFillAsync(CancellationToken cancellationToken)
     {
+        NormalizePartOfSpeech();
+
         if (string.IsNullOrWhiteSpace(Input.KoreanWord))
         {
             ModelState.AddModelError("Input.KoreanWord", "Enter a Korean word before auto-fill.");
             return Page();
         }
 
-        var result = await _autoFillService.AutoFillFromKoreanAsync(Input.KoreanWord, cancellationToken);
+        var result = await _autoFillService.AutoFillFromKoreanAsync(Input.KoreanWord, Input.PartOfSpeech, cancellationToken);
         AutoFillMessage = result.Message;
         AutoFillSucceeded = result.Success;
 
@@ -94,6 +97,7 @@ public class AddWordModel : PageModel
 
         Input = result.FilledWord;
         Input.Id = 0;
+        Input.PartOfSpeech = TestClass.NormalizePartOfSpeech(Input.PartOfSpeech);
         AutoFillMessage = "Auto-fill complete. Review the fields, then click Save Word to store it.";
 
         ModelState.Clear();
@@ -102,6 +106,8 @@ public class AddWordModel : PageModel
 
     public async Task<IActionResult> OnPostSearchAsync(CancellationToken cancellationToken)
     {
+        NormalizePartOfSpeech();
+
         var hasKorean = !string.IsNullOrWhiteSpace(Input.KoreanWord);
         var hasJapaneseDictionary = !string.IsNullOrWhiteSpace(Input.DictionaryTerm);
 
@@ -122,13 +128,15 @@ public class AddWordModel : PageModel
 
     public async Task<IActionResult> OnPostAutoFillFromJapaneseAsync(CancellationToken cancellationToken)
     {
+        NormalizePartOfSpeech();
+
         if (string.IsNullOrWhiteSpace(Input.DictionaryTerm))
         {
             ModelState.AddModelError("Input.DictionaryTerm", "사전형(일본어)을 먼저 입력하세요.");
             return Page();
         }
 
-        var result = await _autoFillService.AutoFillFromJapaneseDictionaryAsync(Input.DictionaryTerm, Input.KoreanWord, cancellationToken);
+        var result = await _autoFillService.AutoFillFromJapaneseDictionaryAsync(Input.DictionaryTerm, Input.KoreanWord, Input.PartOfSpeech, cancellationToken);
         AutoFillMessage = result.Message;
         AutoFillSucceeded = result.Success;
 
@@ -140,6 +148,7 @@ public class AddWordModel : PageModel
         var existingKorean = Input.KoreanWord;
         Input = result.FilledWord;
         Input.Id = 0;
+        Input.PartOfSpeech = TestClass.NormalizePartOfSpeech(Input.PartOfSpeech);
         if (!string.IsNullOrWhiteSpace(existingKorean))
         {
             Input.KoreanWord = existingKorean.Trim();
@@ -152,6 +161,7 @@ public class AddWordModel : PageModel
     private void FillMissingKanaFromTerms()
     {
         Input.KoreanWord = Input.KoreanWord?.Trim() ?? string.Empty;
+        NormalizePartOfSpeech();
         Input.DictionaryTerm = Input.DictionaryTerm?.Trim() ?? string.Empty;
         Input.PoliteForm = Input.PoliteForm?.Trim() ?? string.Empty;
         Input.NegativeForm = Input.NegativeForm?.Trim() ?? string.Empty;
@@ -176,5 +186,10 @@ public class AddWordModel : PageModel
     private static string GetKanaOrFallback(string? kana, string fallbackTerm)
     {
         return string.IsNullOrWhiteSpace(kana) ? fallbackTerm : kana.Trim();
+    }
+
+    private void NormalizePartOfSpeech()
+    {
+        Input.PartOfSpeech = TestClass.NormalizePartOfSpeech(Input.PartOfSpeech);
     }
 }

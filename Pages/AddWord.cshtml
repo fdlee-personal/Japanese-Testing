@@ -7,7 +7,7 @@
 <section class="page-shell">
     <div class="card-panel form-panel">
         <h1 class="page-title">테스트 단어 추가</h1>
-        <p class="page-subtitle">연습용 단어의 한국어/일본어 활용형과 가나를 입력하세요.</p>
+        <p class="page-subtitle">동사뿐 아니라 명사, 형용사, 표현도 저장할 수 있습니다. 필요한 형식만 입력하세요.</p>
 
         @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
         {
@@ -29,75 +29,94 @@
                     <span asp-validation-for="Input.KoreanWord" class="text-danger"></span>
                 </div>
                 <div class="col-12 col-md-6">
+                    <label asp-for="Input.PartOfSpeech"></label>
+                    <select asp-for="Input.PartOfSpeech" class="form-select" id="part-of-speech-select">
+                        <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechVerb">동사</option>
+                        <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechNoun">명사</option>
+                        <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechAdjective">형용사</option>
+                        <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechAdverb">부사</option>
+                        <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechExpression">표현</option>
+                        <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechOther">기타</option>
+                    </select>
+                    <span asp-validation-for="Input.PartOfSpeech" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
                     <label asp-for="Input.DictionaryTerm"></label>
                     <input asp-for="Input.DictionaryTerm" class="form-control" />
                     <span asp-validation-for="Input.DictionaryTerm" class="text-danger"></span>
                 </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="Input.DictionaryTermKana"></label>
+                    <input asp-for="Input.DictionaryTermKana" class="form-control" />
+                    <span asp-validation-for="Input.DictionaryTermKana" class="text-danger"></span>
+                </div>
             </div>
 
-            <div class="button-row compact-row">
+            <div class="button-row compact-row" id="search-autofill-row">
                 <button type="button" id="search-autofill-button" class="action-button secondary-button">자동채우기 검색</button>
             </div>
-            <p class="helper-text">단어/사전형 중 하나를 입력하세요. 둘 다 입력하면 사전형(일본어) 기준으로 자동채웁니다.</p>
-            <label asp-for="Input.DictionaryTermKana"></label>
-            <input asp-for="Input.DictionaryTermKana" class="form-control" />
-            <span asp-validation-for="Input.DictionaryTermKana" class="text-danger"></span>
+            <p class="helper-text">동사는 활용형까지 자동채웁니다. 명사, 형용사, 부사, 표현은 기본형과 가나를 자동채웁니다.</p>
 
-            <label asp-for="Input.PoliteForm"></label>
-            <input asp-for="Input.PoliteForm" class="form-control" />
-            <span asp-validation-for="Input.PoliteForm" class="text-danger"></span>
-            <label asp-for="Input.PoliteFormKana"></label>
-            <input asp-for="Input.PoliteFormKana" class="form-control" />
-            <span asp-validation-for="Input.PoliteFormKana" class="text-danger"></span>
+            <div id="verb-fields">
+                <label asp-for="Input.PoliteForm"></label>
+                <input asp-for="Input.PoliteForm" class="form-control" />
+                <span asp-validation-for="Input.PoliteForm" class="text-danger"></span>
+                <label asp-for="Input.PoliteFormKana"></label>
+                <input asp-for="Input.PoliteFormKana" class="form-control" />
+                <span asp-validation-for="Input.PoliteFormKana" class="text-danger"></span>
 
-            <label asp-for="Input.NegativeForm"></label>
-            <input asp-for="Input.NegativeForm" class="form-control" />
-            <span asp-validation-for="Input.NegativeForm" class="text-danger"></span>
-            <label asp-for="Input.NegativeFormKana"></label>
-            <input asp-for="Input.NegativeFormKana" class="form-control" />
-            <span asp-validation-for="Input.NegativeFormKana" class="text-danger"></span>
+                <label asp-for="Input.NegativeForm"></label>
+                <input asp-for="Input.NegativeForm" class="form-control" />
+                <span asp-validation-for="Input.NegativeForm" class="text-danger"></span>
+                <label asp-for="Input.NegativeFormKana"></label>
+                <input asp-for="Input.NegativeFormKana" class="form-control" />
+                <span asp-validation-for="Input.NegativeFormKana" class="text-danger"></span>
 
-            <label asp-for="Input.NegativePoliteForm"></label>
-            <input asp-for="Input.NegativePoliteForm" class="form-control" />
-            <span asp-validation-for="Input.NegativePoliteForm" class="text-danger"></span>
-            <label asp-for="Input.NegativePoliteFormKana"></label>
-            <input asp-for="Input.NegativePoliteFormKana" class="form-control" />
-            <span asp-validation-for="Input.NegativePoliteFormKana" class="text-danger"></span>
+                <label asp-for="Input.NegativePoliteForm"></label>
+                <input asp-for="Input.NegativePoliteForm" class="form-control" />
+                <span asp-validation-for="Input.NegativePoliteForm" class="text-danger"></span>
+                <label asp-for="Input.NegativePoliteFormKana"></label>
+                <input asp-for="Input.NegativePoliteFormKana" class="form-control" />
+                <span asp-validation-for="Input.NegativePoliteFormKana" class="text-danger"></span>
 
-            <label asp-for="Input.PastForm"></label>
-            <input asp-for="Input.PastForm" class="form-control" />
-            <span asp-validation-for="Input.PastForm" class="text-danger"></span>
-            <label asp-for="Input.PastFormKana"></label>
-            <input asp-for="Input.PastFormKana" class="form-control" />
-            <span asp-validation-for="Input.PastFormKana" class="text-danger"></span>
+                <label asp-for="Input.PastForm"></label>
+                <input asp-for="Input.PastForm" class="form-control" />
+                <span asp-validation-for="Input.PastForm" class="text-danger"></span>
+                <label asp-for="Input.PastFormKana"></label>
+                <input asp-for="Input.PastFormKana" class="form-control" />
+                <span asp-validation-for="Input.PastFormKana" class="text-danger"></span>
 
-            <label asp-for="Input.PastPoliteForm"></label>
-            <input asp-for="Input.PastPoliteForm" class="form-control" />
-            <span asp-validation-for="Input.PastPoliteForm" class="text-danger"></span>
-            <label asp-for="Input.PastPoliteFormKana"></label>
-            <input asp-for="Input.PastPoliteFormKana" class="form-control" />
-            <span asp-validation-for="Input.PastPoliteFormKana" class="text-danger"></span>
+                <label asp-for="Input.PastPoliteForm"></label>
+                <input asp-for="Input.PastPoliteForm" class="form-control" />
+                <span asp-validation-for="Input.PastPoliteForm" class="text-danger"></span>
+                <label asp-for="Input.PastPoliteFormKana"></label>
+                <input asp-for="Input.PastPoliteFormKana" class="form-control" />
+                <span asp-validation-for="Input.PastPoliteFormKana" class="text-danger"></span>
 
-            <label asp-for="Input.PastNegativeForm"></label>
-            <input asp-for="Input.PastNegativeForm" class="form-control" />
-            <span asp-validation-for="Input.PastNegativeForm" class="text-danger"></span>
-            <label asp-for="Input.PastNegativeFormKana"></label>
-            <input asp-for="Input.PastNegativeFormKana" class="form-control" />
-            <span asp-validation-for="Input.PastNegativeFormKana" class="text-danger"></span>
+                <label asp-for="Input.PastNegativeForm"></label>
+                <input asp-for="Input.PastNegativeForm" class="form-control" />
+                <span asp-validation-for="Input.PastNegativeForm" class="text-danger"></span>
+                <label asp-for="Input.PastNegativeFormKana"></label>
+                <input asp-for="Input.PastNegativeFormKana" class="form-control" />
+                <span asp-validation-for="Input.PastNegativeFormKana" class="text-danger"></span>
 
-            <label asp-for="Input.PastNegativePoliteForm"></label>
-            <input asp-for="Input.PastNegativePoliteForm" class="form-control" />
-            <span asp-validation-for="Input.PastNegativePoliteForm" class="text-danger"></span>
-            <label asp-for="Input.PastNegativePoliteFormKana"></label>
-            <input asp-for="Input.PastNegativePoliteFormKana" class="form-control" />
-            <span asp-validation-for="Input.PastNegativePoliteFormKana" class="text-danger"></span>
+                <label asp-for="Input.PastNegativePoliteForm"></label>
+                <input asp-for="Input.PastNegativePoliteForm" class="form-control" />
+                <span asp-validation-for="Input.PastNegativePoliteForm" class="text-danger"></span>
+                <label asp-for="Input.PastNegativePoliteFormKana"></label>
+                <input asp-for="Input.PastNegativePoliteFormKana" class="form-control" />
+                <span asp-validation-for="Input.PastNegativePoliteFormKana" class="text-danger"></span>
 
-            <label asp-for="Input.ConnectiveForm"></label>
-            <input asp-for="Input.ConnectiveForm" class="form-control" />
-            <span asp-validation-for="Input.ConnectiveForm" class="text-danger"></span>
-            <label asp-for="Input.ConnectiveFormKana"></label>
-            <input asp-for="Input.ConnectiveFormKana" class="form-control" />
-            <span asp-validation-for="Input.ConnectiveFormKana" class="text-danger"></span>
+                <label asp-for="Input.ConnectiveForm"></label>
+                <input asp-for="Input.ConnectiveForm" class="form-control" />
+                <span asp-validation-for="Input.ConnectiveForm" class="text-danger"></span>
+                <label asp-for="Input.ConnectiveFormKana"></label>
+                <input asp-for="Input.ConnectiveFormKana" class="form-control" />
+                <span asp-validation-for="Input.ConnectiveFormKana" class="text-danger"></span>
+            </div>
 
             <div class="button-row addword-actions">
                 <a class="action-button secondary-button icon-button" asp-page="/Index" title="홈" aria-label="홈">
@@ -120,10 +139,14 @@
         (function () {
             const form = document.getElementById('add-word-form');
             const searchAutoFillButton = document.getElementById('search-autofill-button');
+            const searchAutoFillRow = document.getElementById('search-autofill-row');
             const saveWordButton = document.getElementById('save-word-button');
-            if (!form || !searchAutoFillButton || !saveWordButton) return;
+            const partOfSpeechSelect = document.getElementById('part-of-speech-select');
+            const verbFields = document.getElementById('verb-fields');
+            if (!form || !searchAutoFillButton || !searchAutoFillRow || !saveWordButton || !partOfSpeechSelect || !verbFields) return;
             const saveAction = '@Url.Page("/AddWord")';
             const searchAutoFillAction = '@Url.Page("/AddWord", new { handler = "Search" })';
+            const verbValue = '@JPracticeWeb.Models.TestClass.PartOfSpeechVerb';
 
             function copyIfEmpty(sourceName, targetName) {
                 const source = form.querySelector(`[name="${sourceName}"]`);
@@ -146,6 +169,13 @@
                 copyIfEmpty('Input.ConnectiveForm', 'Input.ConnectiveFormKana');
             }
 
+            function updateWordTypeUi() {
+                const isVerb = partOfSpeechSelect.value === verbValue;
+                verbFields.hidden = !isVerb;
+                searchAutoFillRow.hidden = false;
+                searchAutoFillButton.disabled = false;
+            }
+
             searchAutoFillButton.addEventListener('click', function () {
                 form.setAttribute('action', searchAutoFillAction);
                 form.submit();
@@ -156,6 +186,9 @@
                 form.setAttribute('action', saveAction);
                 form.submit();
             });
+
+            partOfSpeechSelect.addEventListener('change', updateWordTypeUi);
+            updateWordTypeUi();
         })();
     </script>
 }

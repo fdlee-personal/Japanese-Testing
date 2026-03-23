@@ -16,6 +16,11 @@
             <h1 class="page-title">@Model.Word.KoreanWord</h1>
 
             <div class="detail-list">
+                <div class="detail-row">
+                    <div class="detail-name">품사</div>
+                    <div class="detail-value">@Model.Word.GetPartOfSpeechLabel()</div>
+                </div>
+
                 @foreach (var term in Model.Word.GetJapaneseTerms())
                 {
                     <div class="detail-row">

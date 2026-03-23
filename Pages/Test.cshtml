@@ -6,6 +6,26 @@
 
 <section class="page-shell">
     <div class="card-panel">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+                <label for="test-type-filter" class="form-label">테스트 품사</label>
+                <select id="test-type-filter" name="type" class="form-select" onchange="this.form.submit()">
+                    <option value="@JPracticeWeb.Pages.TestModel.AllTypes" selected="@(Model.SelectedType == JPracticeWeb.Pages.TestModel.AllTypes)">전체</option>
+                    <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechVerb" selected="@(Model.SelectedType == JPracticeWeb.Models.TestClass.PartOfSpeechVerb)">동사</option>
+                    <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechNoun" selected="@(Model.SelectedType == JPracticeWeb.Models.TestClass.PartOfSpeechNoun)">명사</option>
+                    <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechAdjective" selected="@(Model.SelectedType == JPracticeWeb.Models.TestClass.PartOfSpeechAdjective)">형용사</option>
+                    <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechAdverb" selected="@(Model.SelectedType == JPracticeWeb.Models.TestClass.PartOfSpeechAdverb)">부사</option>
+                    <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechExpression" selected="@(Model.SelectedType == JPracticeWeb.Models.TestClass.PartOfSpeechExpression)">표현</option>
+                    <option value="@JPracticeWeb.Models.TestClass.PartOfSpeechOther" selected="@(Model.SelectedType == JPracticeWeb.Models.TestClass.PartOfSpeechOther)">기타</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-auto">
+                <noscript>
+                    <button type="submit" class="action-button secondary-button">적용</button>
+                </noscript>
+            </div>
+        </form>
+
         @if (Model.HasQuestion)
         {
             <div class="question-card">
@@ -20,6 +40,7 @@
             @if (Model.IsChoiceMode)
             {
                 <form method="post" asp-page-handler="Choice" class="word-form">
+                    <input asp-for="State.SelectedType" type="hidden" />
                     <input asp-for="State.KoreanWord" type="hidden" />
                     <input asp-for="State.FormName" type="hidden" />
                     <input asp-for="State.CorrectTerm" type="hidden" />
@@ -66,6 +87,7 @@
             else
             {
                 <form method="post" asp-page-handler="Input" class="word-form">
+                    <input asp-for="State.SelectedType" type="hidden" />
                     <input asp-for="State.KoreanWord" type="hidden" />
                     <input asp-for="State.FormName" type="hidden" />
                     <input asp-for="State.CorrectTerm" type="hidden" />
@@ -101,7 +123,11 @@
         }
         else
         {
-            <p>저장된 단어가 없습니다. 먼저 단어를 추가하세요.</p>
+            <p>
+                @(Model.SelectedType == JPracticeWeb.Pages.TestModel.AllTypes
+                    ? "저장된 단어가 없습니다. 먼저 단어를 추가하세요."
+                    : "선택한 품사의 단어가 없습니다. 다른 품사를 선택하거나 단어를 추가하세요.")
+            </p>
         }
 
         <div class="test-nav-row top-gap">
@@ -110,7 +136,7 @@
             </a>
             @if (Model.HasQuestion && Model.IsAnswered)
             {
-                <a class="action-button secondary-button icon-button icon-next-button" asp-page="/Test" title="다음 문제" aria-label="다음 문제">
+                <a class="action-button secondary-button icon-button icon-next-button" asp-page="/Test" asp-route-type="@Model.SelectedType" title="다음 문제" aria-label="다음 문제">
                     <span aria-hidden="true">&#10145;&#65039;</span>
                 </a>
             }

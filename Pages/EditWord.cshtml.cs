@@ -65,6 +65,7 @@ public class EditWordModel : PageModel
         {
             Id = Input.Id,
             KoreanWord = normalizedKorean,
+            PartOfSpeech = Input.PartOfSpeech,
             DictionaryTerm = normalizedDictionary,
             DictionaryTermKana = Input.DictionaryTermKana.Trim(),
             PoliteForm = Input.PoliteForm.Trim(),
@@ -97,6 +98,7 @@ public class EditWordModel : PageModel
 
     public async Task<IActionResult> OnPostSearchAsync(CancellationToken cancellationToken)
     {
+        NormalizePartOfSpeech();
         var hasKorean = !string.IsNullOrWhiteSpace(Input.KoreanWord);
         var hasJapaneseDictionary = !string.IsNullOrWhiteSpace(Input.DictionaryTerm);
 
@@ -110,11 +112,12 @@ public class EditWordModel : PageModel
         if (hasJapaneseDictionary)
         {
             result = await _autoFillService.AutoFillFromJapaneseDictionaryAsync(
-                Input.DictionaryTerm, Input.KoreanWord, cancellationToken);
+                Input.DictionaryTerm, Input.KoreanWord, Input.PartOfSpeech, cancellationToken);
         }
         else
         {
-            result = await _autoFillService.AutoFillFromKoreanAsync(Input.KoreanWord, cancellationToken);
+            result = await _autoFillService.AutoFillFromKoreanAsync(
+                Input.KoreanWord, Input.PartOfSpeech, cancellationToken);
         }
 
         AutoFillMessage = result.Message;
@@ -128,6 +131,7 @@ public class EditWordModel : PageModel
         var currentId = Input.Id;
         Input = result.FilledWord;
         Input.Id = currentId;
+        Input.PartOfSpeech = TestClass.NormalizePartOfSpeech(Input.PartOfSpeech);
 
         ModelState.Clear();
         return Page();
@@ -136,6 +140,7 @@ public class EditWordModel : PageModel
     private void FillMissingKanaFromTerms()
     {
         Input.KoreanWord = Input.KoreanWord?.Trim() ?? string.Empty;
+        NormalizePartOfSpeech();
         Input.DictionaryTerm = Input.DictionaryTerm?.Trim() ?? string.Empty;
         Input.PoliteForm = Input.PoliteForm?.Trim() ?? string.Empty;
         Input.NegativeForm = Input.NegativeForm?.Trim() ?? string.Empty;
@@ -160,5 +165,10 @@ public class EditWordModel : PageModel
     private static string GetKanaOrFallback(string? kana, string fallbackTerm)
     {
         return string.IsNullOrWhiteSpace(kana) ? fallbackTerm : kana.Trim();
+    }
+
+    private void NormalizePartOfSpeech()
+    {
+        Input.PartOfSpeech = TestClass.NormalizePartOfSpeech(Input.PartOfSpeech);
     }
 }

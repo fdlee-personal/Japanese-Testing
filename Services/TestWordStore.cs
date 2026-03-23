@@ -152,6 +152,7 @@ public static class TestWordStore
             {
                 Id = 1,
                 KoreanWord = "먹다",
+                PartOfSpeech = TestClass.PartOfSpeechVerb,
                 DictionaryTerm = "食べる",
                 DictionaryTermKana = "たべる",
                 PoliteForm = "食べます",
@@ -175,6 +176,7 @@ public static class TestWordStore
             {
                 Id = 2,
                 KoreanWord = "가다",
+                PartOfSpeech = TestClass.PartOfSpeechVerb,
                 DictionaryTerm = "行く",
                 DictionaryTermKana = "いく",
                 PoliteForm = "行きます",
@@ -220,6 +222,7 @@ public static class TestWordStore
     {
         return string.Join("||",
             item.KoreanWord,
+            item.PartOfSpeech,
             item.DictionaryTerm,
             item.PoliteForm,
             item.NegativeForm,
@@ -246,6 +249,7 @@ public static class TestWordStore
         {
             Id = id,
             KoreanWord = source.KoreanWord,
+            PartOfSpeech = TestClass.NormalizePartOfSpeech(source.PartOfSpeech),
             DictionaryTerm = source.DictionaryTerm,
             DictionaryTermKana = source.DictionaryTermKana,
             PoliteForm = source.PoliteForm,

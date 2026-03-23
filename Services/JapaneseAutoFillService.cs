@@ -6,15 +6,15 @@ namespace JPracticeWeb.Services;
 
 public interface IJapaneseAutoFillService
 {
-    Task<JapaneseAutoFillResult> AutoFillFromKoreanAsync(string koreanWord, CancellationToken cancellationToken = default);
-    Task<JapaneseAutoFillResult> AutoFillFromJapaneseDictionaryAsync(string japaneseDictionaryTerm, string? koreanWord = null, CancellationToken cancellationToken = default);
+    Task<JapaneseAutoFillResult> AutoFillFromKoreanAsync(string koreanWord, string? partOfSpeech = null, CancellationToken cancellationToken = default);
+    Task<JapaneseAutoFillResult> AutoFillFromJapaneseDictionaryAsync(string japaneseDictionaryTerm, string? koreanWord = null, string? partOfSpeech = null, CancellationToken cancellationToken = default);
 }
 
 public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAutoFillService
 {
     private readonly HttpClient _httpClient = httpClient;
 
-    public async Task<JapaneseAutoFillResult> AutoFillFromKoreanAsync(string koreanWord, CancellationToken cancellationToken = default)
+    public async Task<JapaneseAutoFillResult> AutoFillFromKoreanAsync(string koreanWord, string? partOfSpeech = null, CancellationToken cancellationToken = default)
     {
         var trimmedKorean = koreanWord.Trim();
         if (string.IsNullOrWhiteSpace(trimmedKorean))
@@ -32,6 +32,7 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
             return await BuildFromJapaneseDictionaryAsync(
                 translated,
                 trimmedKorean,
+                partOfSpeech,
                 "No Japanese translation was returned.",
                 "web",
                 cancellationToken);
@@ -46,7 +47,7 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
         }
     }
 
-    public async Task<JapaneseAutoFillResult> AutoFillFromJapaneseDictionaryAsync(string japaneseDictionaryTerm, string? koreanWord = null, CancellationToken cancellationToken = default)
+    public async Task<JapaneseAutoFillResult> AutoFillFromJapaneseDictionaryAsync(string japaneseDictionaryTerm, string? koreanWord = null, string? partOfSpeech = null, CancellationToken cancellationToken = default)
     {
         var term = japaneseDictionaryTerm?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(term))
@@ -63,6 +64,7 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
             return await BuildFromJapaneseDictionaryAsync(
                 term,
                 koreanWord?.Trim() ?? string.Empty,
+                partOfSpeech,
                 "일본어 사전형이 비어 있습니다.",
                 "사전형",
                 cancellationToken);
@@ -79,8 +81,7 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
 
     private async Task<string> TranslateKoreanToJapaneseAsync(string koreanWord, CancellationToken cancellationToken)
     {
-        var url =
-            $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(koreanWord)}&langpair=ko|ja";
+        var url = $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(koreanWord)}&langpair=ko|ja";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.UserAgent.ParseAdd("JPracticeWeb/1.0");
@@ -97,8 +98,7 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
 
     private async Task<string> TranslateJapaneseToKoreanAsync(string japaneseWord, CancellationToken cancellationToken)
     {
-        var url =
-            $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(japaneseWord)}&langpair=ja|ko";
+        var url = $"https://api.mymemory.translated.net/get?q={Uri.EscapeDataString(japaneseWord)}&langpair=ja|ko";
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.UserAgent.ParseAdd("JPracticeWeb/1.0");
@@ -132,7 +132,6 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
             return null;
         }
 
-        // Prefer an exact word match, then fall back to the first reading.
         foreach (var entry in payload.Data)
         {
             foreach (var jp in entry.Japanese)
@@ -172,8 +171,6 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
         }
 
         var text = translatedText.Trim().Trim('。', '.', '!', '！', '?', '？', '、');
-
-        // Translation services may return comma-separated alternatives; use the first candidate.
         var separators = new[] { ',', '，', ';', '；', '/', '|' };
         var first = text.Split(separators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .FirstOrDefault();
@@ -183,6 +180,7 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
     private async Task<JapaneseAutoFillResult> BuildFromJapaneseDictionaryAsync(
         string dictionaryTerm,
         string koreanWord,
+        string? partOfSpeech,
         string emptyMessage,
         string sourceLabel,
         CancellationToken cancellationToken)
@@ -194,6 +192,17 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
                 Success = false,
                 Message = emptyMessage
             };
+        }
+
+        var normalizedPartOfSpeech = TestClass.NormalizePartOfSpeech(partOfSpeech);
+        if (!string.Equals(normalizedPartOfSpeech, TestClass.PartOfSpeechVerb, StringComparison.Ordinal))
+        {
+            return await BuildNonVerbWordAsync(
+                dictionaryTerm,
+                koreanWord,
+                normalizedPartOfSpeech,
+                sourceLabel,
+                cancellationToken);
         }
 
         if (!JapaneseVerbConjugator.TryConjugate(dictionaryTerm, out var kanjiWord, out var error))
@@ -215,7 +224,6 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
             }
             catch
             {
-                // Keep KoreanWord empty if reverse translation fails; form still remains editable.
             }
         }
 
@@ -223,6 +231,8 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
         {
             kanjiWord.KoreanWord = resolvedKoreanWord;
         }
+
+        kanjiWord.PartOfSpeech = normalizedPartOfSpeech;
 
         var kanaDictionary = await TryGetJapaneseReadingAsync(dictionaryTerm, cancellationToken);
         var kanaWasAutoFilled = false;
@@ -246,6 +256,49 @@ public sealed class JapaneseAutoFillService(HttpClient httpClient) : IJapaneseAu
                 : $"{sourceLabel} 기준으로 활용형을 자동채웠습니다: {dictionaryTerm} (가나 조회 실패, 한자값 복사)",
             TranslatedDictionaryTerm = dictionaryTerm,
             FilledWord = kanjiWord
+        };
+    }
+
+    private async Task<JapaneseAutoFillResult> BuildNonVerbWordAsync(
+        string dictionaryTerm,
+        string koreanWord,
+        string partOfSpeech,
+        string sourceLabel,
+        CancellationToken cancellationToken)
+    {
+        var word = new TestClass
+        {
+            PartOfSpeech = partOfSpeech,
+            DictionaryTerm = dictionaryTerm.Trim()
+        };
+
+        var resolvedKoreanWord = koreanWord?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(resolvedKoreanWord))
+        {
+            try
+            {
+                resolvedKoreanWord = await TranslateJapaneseToKoreanAsync(dictionaryTerm, cancellationToken);
+            }
+            catch
+            {
+            }
+        }
+
+        word.KoreanWord = resolvedKoreanWord;
+
+        var kanaDictionary = await TryGetJapaneseReadingAsync(dictionaryTerm, cancellationToken);
+        word.DictionaryTermKana = string.IsNullOrWhiteSpace(kanaDictionary)
+            ? word.DictionaryTerm
+            : kanaDictionary.Trim();
+
+        return new JapaneseAutoFillResult
+        {
+            Success = true,
+            Message = string.IsNullOrWhiteSpace(kanaDictionary)
+                ? $"{sourceLabel} 기준으로 기본형을 자동채웠습니다: {dictionaryTerm} (가나 조회 실패, 원문 복사)"
+                : $"{sourceLabel} 기준으로 기본형과 가나를 자동채웠습니다: {dictionaryTerm}",
+            TranslatedDictionaryTerm = dictionaryTerm,
+            FilledWord = word
         };
     }
 
@@ -357,12 +410,7 @@ internal static class JapaneseVerbConjugator
             return true;
         }
 
-        if (!TryGodanConjugate(term, out word, out error))
-        {
-            return false;
-        }
-
-        return true;
+        return TryGodanConjugate(term, out word, out error);
     }
 
     private static bool TryGodanConjugate(string term, out TestClass word, out string error)

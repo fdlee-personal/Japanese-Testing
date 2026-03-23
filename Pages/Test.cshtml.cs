@@ -9,9 +9,13 @@ public class TestModel : PageModel
 {
     private const string ChoiceMode = "choice";
     private const string InputMode = "input";
+    public const string AllTypes = "all";
 
     [BindProperty]
     public TestState State { get; set; } = new();
+
+    [BindProperty(SupportsGet = true, Name = "type")]
+    public string SelectedType { get; set; } = AllTypes;
 
     [BindProperty]
     public string SelectedChoice { get; set; } = string.Empty;
@@ -47,6 +51,7 @@ public class TestModel : PageModel
 
     public void OnGet()
     {
+        SelectedType = NormalizeSelectedType(SelectedType);
         GenerateQuestion();
     }
 
@@ -113,7 +118,9 @@ public class TestModel : PageModel
 
     private void GenerateQuestion()
     {
-        var items = TestWordStore.GetAll();
+        var items = TestWordStore.GetAll()
+            .Where(MatchesSelectedType)
+            .ToList();
         if (items.Count == 0)
         {
             HasQuestion = false;
@@ -127,6 +134,7 @@ public class TestModel : PageModel
 
         State = new TestState
         {
+            SelectedType = SelectedType,
             KoreanWord = selectedItem.KoreanWord,
             FormName = selectedTerm.Label,
             CorrectTerm = selectedTerm.Term,
@@ -151,6 +159,9 @@ public class TestModel : PageModel
 
     private void RestoreQuestionFromState()
     {
+        SelectedType = NormalizeSelectedType(string.IsNullOrWhiteSpace(State.SelectedType) ? SelectedType : State.SelectedType);
+        State.SelectedType = SelectedType;
+
         if (string.IsNullOrWhiteSpace(State.KoreanWord) ||
             string.IsNullOrWhiteSpace(State.FormName) ||
             string.IsNullOrWhiteSpace(State.CorrectTerm))
@@ -367,8 +378,25 @@ public class TestModel : PageModel
         return $"{term} ({kana})";
     }
 
+    private bool MatchesSelectedType(Models.TestClass word)
+    {
+        return string.Equals(SelectedType, AllTypes, StringComparison.Ordinal) ||
+               string.Equals(Models.TestClass.NormalizePartOfSpeech(word.PartOfSpeech), SelectedType, StringComparison.Ordinal);
+    }
+
+    private static string NormalizeSelectedType(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || string.Equals(value, AllTypes, StringComparison.OrdinalIgnoreCase))
+        {
+            return AllTypes;
+        }
+
+        return Models.TestClass.NormalizePartOfSpeech(value);
+    }
+
     public sealed class TestState
     {
+        public string SelectedType { get; set; } = AllTypes;
         public string KoreanWord { get; set; } = string.Empty;
         public string FormName { get; set; } = string.Empty;
         public string CorrectTerm { get; set; } = string.Empty;
